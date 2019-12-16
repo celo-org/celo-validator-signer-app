@@ -165,7 +165,7 @@ static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e) {
 static void gen_private_key(uint64_t *out_private_key) {
     unsigned int bip32_path[5];
     bip32_path[0] = 44     | 0x80000000; // BIP44 specification
-    bip32_path[1] = 49371  | 0x80000000; // Specifies Celo. Note: BIP44 path not publicly secured yet
+    bip32_path[1] = 0x8000ce10; // Specifies Celo. Note: BIP44 path not publicly secured yet
     bip32_path[2] = 0      | 0x80000000; // Account value
     bip32_path[3] = 0;
     bip32_path[4] = 0;                   // Index of derived child key 
@@ -235,7 +235,7 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
     return 0;
 }
 
-static void sample_main(void) {
+static void main(void) {
     volatile unsigned int rx = 0;
     volatile unsigned int tx = 0;
     volatile unsigned int flags = 0;
@@ -452,7 +452,7 @@ __attribute__((section(".boot"))) int main(void) {
 
             ui_idle();
 
-            sample_main();
+            main();
         }
         CATCH_OTHER(e) {
         }
