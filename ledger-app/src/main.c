@@ -235,7 +235,7 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
     return 0;
 }
 
-static void main(void) {
+static void sample_main(void) {
     volatile unsigned int rx = 0;
     volatile unsigned int tx = 0;
     volatile unsigned int flags = 0;
@@ -452,7 +452,7 @@ __attribute__((section(".boot"))) int main(void) {
 
             ui_idle();
 
-            main();
+            sample_main();
         }
         CATCH_OTHER(e) {
         }
