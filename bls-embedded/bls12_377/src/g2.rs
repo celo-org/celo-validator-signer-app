@@ -254,8 +254,8 @@ impl G2Affine {
         res
     }
 
-    /// Serializes this element into uncompressed form.
-    //  TODO: Test coverage for compression
+    /// Serializes this element into uncompressed form in
+    /// big-endian representation.
     #[inline(always)]     
     pub fn to_uncompressed(&self) -> [u8; 192] {
         let mut res = [0; 192];
@@ -274,8 +274,25 @@ impl G2Affine {
         res
     }
 
+    /// Serializes this element into uncompressed form in
+    /// little-endian representation. Assumes the received point
+    /// is not infinity.
+    #[inline(always)]     
+    pub fn to_uncompressed_littleendian(&self) -> [u8; 192] {
+        let mut res = [0; 192];
+
+        let x = Fp2::conditional_select(&self.x, &Fp2::zero(), self.infinity);
+        let y = Fp2::conditional_select(&self.y, &Fp2::zero(), self.infinity);
+
+        res[0..48].copy_from_slice(&x.c0.to_bytes_littleendian()[..]);
+        res[48..96].copy_from_slice(&x.c1.to_bytes_littleendian()[..]);
+        res[96..144].copy_from_slice(&y.c0.to_bytes_littleendian()[..]);
+        res[144..192].copy_from_slice(&y.c1.to_bytes_littleendian()[..]);
+
+        res
+    }
+
     /// Attempts to deserialize an uncompressed element. 
-    
     pub fn from_uncompressed(bytes: &[u8; 192]) -> CtOption<Self> {
         Self::from_uncompressed_unchecked(bytes)
             .and_then(|p| CtOption::new(p, p.is_on_curve() & p.is_torsion_free()))
@@ -285,7 +302,6 @@ impl G2Affine {
     /// element is on the curve and not checking if it is in the correct subgroup.
     /// **This is dangerous to call unless you trust the bytes you are reading; otherwise,
     /// API invariants may be broken.** Please consider using `from_uncompressed()` instead.
-     
     pub fn from_uncompressed_unchecked(bytes: &[u8; 192]) -> CtOption<Self> {
         // Obtain the three flags from the start of the byte sequence
         let compression_flag_set = Choice::from((bytes[0] >> 7) & 1);
@@ -363,6 +379,7 @@ impl G2Affine {
     }
 
     /// Attempts to deserialize a compressed element.
+    //  TODO: Add test coverage
     pub fn from_compressed_vartime(bytes: &[u8; 96]) -> Option<Self> {
         // We already know the point is on the curve because this is established
         // by the y-coordinate recovery procedure in from_compressed_unchecked().
@@ -379,7 +396,7 @@ impl G2Affine {
     /// element is in the correct subgroup.
     /// **This is dangerous to call unless you trust the bytes you are reading; otherwise,
     /// API invariants may be broken.** Please consider using `from_compressed()` instead.
-     
+    //  TODO: Add test coverage 
     pub fn from_compressed_unchecked_vartime(bytes: &[u8; 96]) -> Option<Self> {
         // Obtain the three flags from the start of the byte sequence
         let compression_flag_set = Choice::from((bytes[0] >> 7) & 1);
@@ -628,10 +645,7 @@ impl G2Projective {
     /// Computes the doubling of this point.
     #[inline]
     pub fn double(&self) -> G2Projective {
-        // http://www.hyperelliptic.org/EFD/g2p/auto-shortw-jacobian-0.html#doubling-dbl-2009-l
-        //
-        // There are no points of order 2.
-        // TODO: Is this true for 377?
+        // http://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#doubling-dbl-2009-l
 
         let a = self.x.square();
         let b = self.y.square();
@@ -877,6 +891,20 @@ impl G2Projective {
             .ct_eq(&((self.z.square() * self.z).square() * b()))
             | self.z.is_zero()
     }
+}
+
+#[test]
+fn test_to_uncompressed() {
+    let elem = [0, 31, 183, 170, 199, 212, 167, 3, 66, 81, 201, 4, 241, 48, 79, 223, 24, 52, 101, 225, 116, 36, 166, 246, 213, 127, 77, 200, 154, 183, 73, 53, 249, 207, 6, 102, 170, 157, 11, 128, 177, 20, 254, 185, 15, 142, 231, 68, 0, 222, 228, 89, 156, 13, 254, 199, 91, 133, 241, 129, 173, 74, 215, 198, 210, 32, 83, 154, 161, 153, 255, 92, 239, 64, 69, 147, 39, 48, 118, 242, 26, 126, 220, 109, 229, 226, 101, 150, 25, 228, 38, 133, 96, 89, 73, 238, 0, 105, 186, 188, 162, 17, 191, 123, 4, 159, 165, 161, 68, 105, 85, 121, 63, 19, 169, 22, 165, 195, 165, 66, 206, 1, 108, 166, 186, 198, 49, 232, 110, 212, 243, 6, 4, 6, 2, 95, 165, 241, 12, 160, 98, 34, 217, 143, 1, 42, 244, 0, 161, 173, 241, 170, 146, 11, 183, 159, 9, 30, 138, 40, 3, 30, 231, 111, 97, 118, 217, 229, 221, 205, 106, 218, 224, 24, 116, 233, 237, 223, 225, 180, 55, 239, 219, 248, 119, 10, 49, 96, 145, 22, 219, 26];
+    let elem_result = G2Affine::from(G2Projective::generator() * &Scalar::from(5)).to_uncompressed();
+    assert_eq!(&elem[..], &elem_result[..]); 
+}
+
+#[test]
+fn test_from_uncompressed() {
+    let elem = G2Affine::from_uncompressed(&[0, 31, 183, 170, 199, 212, 167, 3, 66, 81, 201, 4, 241, 48, 79, 223, 24, 52, 101, 225, 116, 36, 166, 246, 213, 127, 77, 200, 154, 183, 73, 53, 249, 207, 6, 102, 170, 157, 11, 128, 177, 20, 254, 185, 15, 142, 231, 68, 0, 222, 228, 89, 156, 13, 254, 199, 91, 133, 241, 129, 173, 74, 215, 198, 210, 32, 83, 154, 161, 153, 255, 92, 239, 64, 69, 147, 39, 48, 118, 242, 26, 126, 220, 109, 229, 226, 101, 150, 25, 228, 38, 133, 96, 89, 73, 238, 0, 105, 186, 188, 162, 17, 191, 123, 4, 159, 165, 161, 68, 105, 85, 121, 63, 19, 169, 22, 165, 195, 165, 66, 206, 1, 108, 166, 186, 198, 49, 232, 110, 212, 243, 6, 4, 6, 2, 95, 165, 241, 12, 160, 98, 34, 217, 143, 1, 42, 244, 0, 161, 173, 241, 170, 146, 11, 183, 159, 9, 30, 138, 40, 3, 30, 231, 111, 97, 118, 217, 229, 221, 205, 106, 218, 224, 24, 116, 233, 237, 223, 225, 180, 55, 239, 219, 248, 119, 10, 49, 96, 145, 22, 219, 26]).unwrap();
+    let elem_result = G2Affine::from(G2Projective::generator() * &Scalar::from(5));
+    assert_eq!(elem, elem_result); 
 }
 
 #[test]

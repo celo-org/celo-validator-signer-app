@@ -42,7 +42,7 @@ io_seproxyhal_touch_approve(const bagl_element_t *e);
 static const bagl_element_t *io_seproxyhal_touch_deny(const bagl_element_t *e);
 
 static void ui_idle(void);
-static unsigned char display_text_part(void);
+//static unsigned char display_text_part(void);
 static void ui_text(void);
 static void ui_approval(void);
 
@@ -51,13 +51,19 @@ static void ui_approval(void);
 #define SIG_BYTES 96
 #define PUBKEY_BYTES 192
 
-#define CLA 0x80
+#define CLA 0xe0
 #define INS_SIGN 0x02
 #define INS_GET_PUBLIC_KEY 0x04
+#define INS_GET_APP_CONFIGURATION 0x06
 #define P1_LAST 0x80
 #define P1_MORE 0x00
 
-static char lineBuffer[MAX_CHARS_PER_LINE+1];
+#define APP_TYPE 0x04
+#define LEDGER_MAJOR_VERSION 1
+#define LEDGER_MINOR_VERSION 0
+#define LEDGER_PATCH_VERSION 0
+
+//static char lineBuffer[MAX_CHARS_PER_LINE+1];
 
 UX_STEP_NOCB(
     ux_idle_flow_1_step,
@@ -128,7 +134,7 @@ UX_STEP_NOCB(
     bnnn_paging,
     {
       .title = "Message",
-      .text = lineBuffer,
+//      .text = lineBuffer,
     });    
 
 UX_STEP_VALID(
@@ -165,7 +171,7 @@ static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e) {
 static void gen_private_key(uint64_t *out_private_key) {
     unsigned int bip32_path[5];
     bip32_path[0] = 44     | 0x80000000; // BIP44 specification
-   bip32_path[1] = 0x8000ce10; // Specifies Celo. Note: BIP44 path not publicly secured yet
+    bip32_path[1] = 0x8000ce10; // Specifies Celo. Note: BIP44 path not publicly secured yet
     bip32_path[2] = 0      | 0x80000000; // Account value
     bip32_path[3] = 0;
     bip32_path[4] = 0;                   // Index of derived child key 
@@ -281,7 +287,7 @@ static void sample_main(void) {
                     text_y = 60;
                     G_io_apdu_buffer[5 + G_io_apdu_buffer[4]] = '\0';
 
-                    display_text_part();
+                    //display_text_part();
                     ui_text();
 
                     flags |= IO_ASYNCH_REPLY;
@@ -296,6 +302,16 @@ static void sample_main(void) {
 		    tx = PUBKEY_BYTES;
 		    THROW(0x9000);
                 } break;
+
+		case INS_GET_APP_CONFIGURATION: {
+		    G_io_apdu_buffer[0] = 0x00;
+		    G_io_apdu_buffer[1] = APP_TYPE;
+		    G_io_apdu_buffer[2] = LEDGER_MAJOR_VERSION;
+		    G_io_apdu_buffer[3] = LEDGER_MINOR_VERSION;
+		    G_io_apdu_buffer[4] = LEDGER_PATCH_VERSION;
+		    tx = 5;
+		    THROW(0x9000);
+		} break;
 
                 case 0xFF: // return to dashboard
                     goto return_to_dashboard;
@@ -335,7 +351,7 @@ void io_seproxyhal_display(const bagl_element_t *element) {
 }
 
 // Pick the text elements to display
-static unsigned char display_text_part() {
+/*static unsigned char display_text_part() {
     unsigned int i;
     WIDE char *text = (char*) G_io_apdu_buffer + 5;
     if (text[current_text_pos] == '\0') {
@@ -352,7 +368,7 @@ static unsigned char display_text_part() {
     }
     lineBuffer[i] = '\0';
     return 1;
-}
+}*/
 
 static void ui_idle(void) {
     uiState = UI_IDLE;
@@ -392,11 +408,11 @@ unsigned char io_event(unsigned char channel) {
         if ((uiState == UI_TEXT) &&
             (os_seph_features() &
              SEPROXYHAL_TAG_SESSION_START_EVENT_FEATURE_SCREEN_BIG)) {
-            if (!display_text_part()) {
-                ui_approval();
-            } else {
+        //    if (!display_text_part()) {
+        //        ui_approval();
+        //    } else {
                 UX_REDISPLAY();
-            }
+        //    }
         } else {
             UX_DISPLAYED_EVENT();
         }
