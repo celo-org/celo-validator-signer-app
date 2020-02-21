@@ -171,7 +171,7 @@ static const bagl_element_t *io_seproxyhal_touch_exit(const bagl_element_t *e) {
 static void gen_private_key(uint64_t *out_private_key) {
     unsigned int bip32_path[5];
     bip32_path[0] = 44     | 0x80000000; // BIP44 specification
-    bip32_path[1] = 0x8000ce10; // Specifies Celo. Note: BIP44 path not publicly secured yet
+    bip32_path[1] = 0x8000ce10; // Specifies Celo
     bip32_path[2] = 0      | 0x80000000; // Account value
     bip32_path[3] = 0;
     bip32_path[4] = 0;                   // Index of derived child key 
@@ -181,7 +181,7 @@ static void gen_private_key(uint64_t *out_private_key) {
                                NULL);
     // The modulus of the scalar field of 256k1 is larger than for bls12_377. If the entropy generated does not fit
     // into an element of the bls12_377 scalar field, we increment the index in the bip32 path and try again
-    if (!is_valid_key((const uint8_t*)out_private_key)) {
+    while (!is_valid_key((const uint8_t*)out_private_key)) {
         bip32_path[4] += 1;
         os_perso_derive_node_bip32(CX_CURVE_256K1, bip32_path,
                                    sizeof(bip32_path) / sizeof(bip32_path[0]),
