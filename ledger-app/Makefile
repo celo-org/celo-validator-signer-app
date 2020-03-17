@@ -27,7 +27,7 @@ SIGNER_LIB_INCLUDES := ../bls-embedded/bls
 
 # Main app configuration
 
-APPNAME = "Celo Signer"
+APPNAME = "Celo Validator"
 APPVERSION = 1.0.0
 APP_LOAD_PARAMS = --appFlags 0x200 $(COMMON_LOAD_PARAMS)
 
