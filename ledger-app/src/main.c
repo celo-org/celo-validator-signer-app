@@ -55,6 +55,7 @@ static void ui_approval(void);
 #define INS_SIGN 0x02
 #define INS_GET_PUBLIC_KEY 0x04
 #define INS_GET_APP_CONFIGURATION 0x06
+#define INS_GET_APP_TYPE 0x0C
 #define P1_LAST 0x80
 #define P1_MORE 0x00
 
@@ -305,13 +306,18 @@ static void sample_main(void) {
 
 		case INS_GET_APP_CONFIGURATION: {
 		    G_io_apdu_buffer[0] = 0x00;
-		    G_io_apdu_buffer[1] = APP_TYPE;
-		    G_io_apdu_buffer[2] = LEDGER_MAJOR_VERSION;
-		    G_io_apdu_buffer[3] = LEDGER_MINOR_VERSION;
-		    G_io_apdu_buffer[4] = LEDGER_PATCH_VERSION;
-		    tx = 5;
+		    G_io_apdu_buffer[1] = LEDGER_MAJOR_VERSION;
+		    G_io_apdu_buffer[2] = LEDGER_MINOR_VERSION;
+		    G_io_apdu_buffer[3] = LEDGER_PATCH_VERSION;
+		    tx = 4;
 		    THROW(0x9000);
 		} break;
+
+		case INS_GET_APP_TYPE: {
+		    G_io_apdu_buffer[0] = APP_TYPE;
+		    tx = 1;
+		    THROW(0x9000);
+	       } break;
 
                 case 0xFF: // return to dashboard
                     goto return_to_dashboard;
