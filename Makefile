@@ -1,6 +1,6 @@
 include $(BOLOS_SDK)/Makefile.defines
 
-APPNAME = "Celo Validator"
+APPNAME = "Celo Validator Signer"
 APPVERSION = 1.0.0
 APP_LOAD_PARAMS = --appFlags 0x200 $(COMMON_LOAD_PARAMS)
 

@@ -16,16 +16,17 @@ RUN echo "Create install directories" && \
   mkdir ${BOLOS_ENV} ${BOLOS_SDK}
 
 RUN echo "Install custom gcc" && \
-  curl -L https://launchpad.net/gcc-arm-embedded/5.0/5-2016-q1-update/+download/gcc-arm-none-eabi-5_3-2016q1-20160330-linux.tar.bz2 --output /tmp/gcc.tar.bz2 && \
-  echo "217850b0f3297014e8e52010aa52da0a83a073ddec4dc49b1a747458c5d6a223  /tmp/gcc.tar.bz2" | sha256sum -c && \
+  curl -L https://developer.arm.com/-/media/Files/downloads/gnu-rm/6-2017q2/gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2 --output /tmp/gcc.tar.bz2 && \
+  echo "e68e4b2fe348ecb567c27985355dff75b65319a0f6595d44a18a8c5e05887cc3  /tmp/gcc.tar.bz2" | sha256sum -c && \
   tar -xvf /tmp/gcc.tar.bz2 -C ${BOLOS_ENV} && \
+  mv ${BOLOS_ENV}/gcc-arm-none-eabi-6-2017-q2-update ${BOLOS_ENV}/gcc-arm-none-eabi && \
   rm /tmp/gcc.tar.bz2
 
 RUN echo "Install custom clang" && \
-  curl -L https://releases.llvm.org/7.0.0/clang+llvm-7.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz --output /tmp/clang.tar.xz && \
-#  echo "e74ce06d99ed9ce42898e22d2a966f71ae785bdf4edbded93e628d696858921a  /tmp/clang.tar.xz" | sha256sum -c && \
+  curl -L https://releases.llvm.org/8.0.0/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz --output /tmp/clang.tar.xz && \
+  echo "0f5c314f375ebd5c35b8c1d5e5b161d9efaeff0523bac287f8b4e5b751272f51  /tmp/clang.tar.xz" | sha256sum -c && \
   tar -xvf /tmp/clang.tar.xz -C ${BOLOS_ENV} && \
-  mv ${BOLOS_ENV}/clang+llvm-7.0.0-x86_64-linux-gnu-ubuntu-16.04 ${BOLOS_ENV}/clang-arm-fropi && \
+  mv ${BOLOS_ENV}/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04 ${BOLOS_ENV}/clang-arm-fropi && \
   rm /tmp/clang.tar.xz
 
 RUN echo "Install Ledger Nano X SDK"

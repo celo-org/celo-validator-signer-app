@@ -18,6 +18,7 @@
 #include "os.h"
 #include "cx.h"
 #include "bls-embedded.h"
+#include "g1.h"
 
 #include "os_io_seproxyhal.h"
 
@@ -65,6 +66,9 @@ static void ui_approval(void);
 #define LEDGER_PATCH_VERSION 0
 
 //static char lineBuffer[MAX_CHARS_PER_LINE+1];
+
+static uint64_t private_key[4];
+static uint8_t  public_key[PUBKEY_BYTES];
 
 UX_STEP_NOCB(
     ux_idle_flow_1_step,
@@ -193,16 +197,36 @@ static void gen_private_key(uint64_t *out_private_key) {
 
 static const bagl_element_t*
 io_seproxyhal_touch_approve(const bagl_element_t *e) {
-    uint64_t in_private_key[4];
-    gen_private_key(in_private_key);
     uint8_t *input_hash = G_io_apdu_buffer + 5;
-    sign_hash(in_private_key, input_hash, G_io_apdu_buffer);
+
+    Fq *key = (Fq *)private_key;
+    G1Affine hash;
+    G1Jacobian signature;
+
+    //sign_hash(private_key, input_hash, G_io_apdu_buffer);
+
+#if 1
+    G1Jacobian sanitized;
+
+    g1a_from_bytes(&hash, input_hash);
+    g1a_sanitize(&sanitized, &hash);
+    g1j_mul(&signature, &sanitized, key);
+    g1j_to_bytes(G_io_apdu_buffer, &signature);
+#else
+    g1a_from_bytes(&hash, input_hash);
+    g1a_mul(&signature, &hash, key);
+    g1j_to_bytes(G_io_apdu_buffer, &signature);
+#endif
+
     G_io_apdu_buffer[SIG_BYTES] = 0x90;
     G_io_apdu_buffer[SIG_BYTES+1] = 0x00;
+
     // Send back the response, do not restart the event loop
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, SIG_BYTES+2);
+
     // Display back the original UX
     ui_idle();
+
     return 0; // do not redraw the widget
 }
 
@@ -247,6 +271,9 @@ static void sample_main(void) {
     volatile unsigned int tx = 0;
     volatile unsigned int flags = 0;
 
+    // Compute key pair
+    gen_private_key(private_key);
+    get_pubkey(private_key, public_key);
 
     // next timer callback in 500 ms
     UX_CALLBACK_SET_INTERVAL(500);
@@ -295,10 +322,6 @@ static void sample_main(void) {
                 } break;
 
                 case INS_GET_PUBLIC_KEY: {
-	            uint64_t private_key[4];
-                    gen_private_key(private_key);					 
-		    uint8_t public_key[PUBKEY_BYTES];
-		    get_pubkey(private_key, public_key);
 		    os_memmove(G_io_apdu_buffer, public_key, PUBKEY_BYTES);
 		    tx = PUBKEY_BYTES;
 		    THROW(0x9000);

@@ -22,12 +22,12 @@ endif
 
 include $(BOLOS_SDK)/Makefile.defines
 
-SIGNER_LIB := ../bls-embedded/bls/target/thumbv6m-none-eabi/release/libbls_embedded.a
-SIGNER_LIB_INCLUDES := ../bls-embedded/bls
+SIGNER_LIB := ../bls-embedded/bls/target/thumbv6m-none-eabi/release/libbls_embedded.a ../bls-embedded/bls12_377/libfpc.a
+SIGNER_LIB_INCLUDES := ../bls-embedded/bls ../bls-embedded/bls12_377/src
 
 # Main app configuration
 
-APPNAME = "Celo Validator"
+APPNAME = "Celo Signer"
 APPVERSION = 1.0.0
 APP_LOAD_PARAMS = --appFlags 0x200 $(COMMON_LOAD_PARAMS)
 
@@ -63,7 +63,7 @@ DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
 ifneq ($(BOLOS_ENV),)
 $(info BOLOS_ENV=$(BOLOS_ENV))
 CLANGPATH := $(BOLOS_ENV)/clang-arm-fropi/bin/
-GCCPATH := $(BOLOS_ENV)/gcc-arm-none-eabi-5_3-2016q1/bin/
+GCCPATH := $(BOLOS_ENV)/gcc-arm-none-eabi/bin/
 else
 $(info BOLOS_ENV is not set: falling back to CLANGPATH and GCCPATH)
 endif
@@ -83,7 +83,7 @@ AS := $(GCCPATH)arm-none-eabi-gcc
 AFLAGS +=
 
 LD := $(GCCPATH)arm-none-eabi-gcc
-LDFLAGS += -O3 -Os -L/opt/bolos-env/gcc-arm-none-eabi-5_3-2016q1/arm-none-eabi/lib/thumb/
+LDFLAGS += -O3 -Os -L/opt/bolos-env/gcc-arm-none-eabi/arm-none-eabi/lib/thumb/
 LDLIBS += -lm -lc
 
 # Specific to nano X
